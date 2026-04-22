@@ -2,10 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Icon } from '@/components/Icon';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api } from '@/lib/api';
 
@@ -32,45 +31,47 @@ export function JoinForm() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Join a game</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={submit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="join-pin">Game PIN</Label>
-            <Input
-              id="join-pin"
-              className="text-center font-mono text-2xl tracking-widest h-14"
-              placeholder="000000"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              maxLength={6}
-              inputMode="numeric"
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="join-name">Your name</Label>
-            <Input
-              id="join-name"
-              placeholder="e.g. Alice"
-              value={name}
-              onChange={(e) => setName(e.target.value.slice(0, 24))}
-              required
-            />
-          </div>
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          <Button type="submit" size="lg" className="w-full" disabled={loading}>
-            {loading ? 'Joining…' : 'Enter'}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <form
+      onSubmit={submit}
+      className="rounded-3xl border-4 border-surface-container-highest bg-white p-8 shadow-[0_12px_0_0_#e2e0fc]"
+    >
+      <div className="mb-6 flex items-center gap-2 font-label text-label-bold uppercase tracking-widest text-on-surface-variant">
+        <Icon name="play_circle" className="text-base text-primary" />
+        Join a game
+      </div>
+      <div className="space-y-4">
+        <Input
+          className="h-16 text-center font-display text-4xl font-black tracking-[0.3em]"
+          placeholder="000000"
+          value={pin}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+          maxLength={6}
+          inputMode="numeric"
+          required
+        />
+        <Input
+          className="h-12 text-body-md"
+          placeholder="Your nickname"
+          value={name}
+          onChange={(e) => setName(e.target.value.slice(0, 24))}
+          required
+        />
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        <Button
+          type="submit"
+          variant="tactile"
+          size="lg"
+          className="w-full text-body-lg"
+          disabled={loading}
+        >
+          {loading ? 'Joining…' : 'Enter'}
+          <Icon name="arrow_forward" />
+        </Button>
+      </div>
+    </form>
   );
 }

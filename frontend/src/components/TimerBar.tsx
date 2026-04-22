@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Progress } from '@/components/ui/progress';
+import { Icon } from '@/components/Icon';
 
 export function TimerBar({
   startedAt,
@@ -28,11 +28,17 @@ export function TimerBar({
   }, [remaining, onComplete]);
 
   return (
-    <div className="flex items-center gap-3">
-      <Progress value={pct} className="flex-1" />
-      <span className="w-10 text-right font-mono text-lg tabular-nums">
-        {Math.ceil(remaining / 1000)}s
-      </span>
+    <div className="flex items-center gap-4">
+      <div className="flex items-center gap-1.5 font-label text-headline-md text-tertiary">
+        <Icon name="timer" filled />
+        <span className="tabular-nums">{Math.ceil(remaining / 1000)}s</span>
+      </div>
+      <div className="h-6 flex-1 overflow-hidden rounded-full border-2 border-white bg-surface-container p-1 shadow-inner">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-answer-green via-answer-yellow to-answer-red transition-all shadow-[0_0_15px_rgba(34,197,94,0.4)]"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
     </div>
   );
 }

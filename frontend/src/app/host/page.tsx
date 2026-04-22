@@ -3,31 +3,30 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Plus, LogOut, Play, Trash2 } from 'lucide-react';
+import { AppShell } from '@/components/AppShell';
+import { Icon } from '@/components/Icon';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Quiz } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+
+const CARD_TONES = [
+  { tint: 'bg-primary-fixed', accent: 'text-primary', shadow: 'shadow-[0_20px_40px_-12px_rgba(45,91,255,0.15)]' },
+  { tint: 'bg-secondary-fixed', accent: 'text-secondary', shadow: 'shadow-[0_20px_40px_-12px_rgba(173,0,137,0.15)]' },
+  { tint: 'bg-tertiary-fixed', accent: 'text-tertiary', shadow: 'shadow-[0_20px_40px_-12px_rgba(112,93,0,0.15)]' },
+] as const;
 
 export default function HostDashboard() {
   const router = useRouter();
   const hydrate = useAuth((s) => s.hydrate);
   const token = useAuth((s) => s.token);
   const user = useAuth((s) => s.user);
-  const clear = useAuth((s) => s.clear);
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     hydrate();
@@ -71,96 +70,135 @@ export default function HostDashboard() {
     setQuizzes((q) => q.filter((x) => x._id !== id));
   }
 
+  const filtered = search
+    ? quizzes.filter((q) =>
+        q.title.toLowerCase().includes(search.toLowerCase())
+      )
+    : quizzes;
+
   return (
-    <main className="flex flex-1 flex-col gap-6">
-      <header className="flex items-center justify-between">
+    <AppShell>
+      <section className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-bold">Your quizzes</h1>
-          {user && (
-            <p className="text-sm text-muted-foreground">
-              Signed in as {user.email}
-            </p>
-          )}
+          <h1 className="font-display text-display-xl text-on-surface">
+            My Quizzes
+          </h1>
+          <p className="mt-2 max-w-xl font-body-lg text-on-surface-variant">
+            Manage your library of high-energy learning sessions.
+            {user && <> Signed in as <span className="font-bold">{user.email}</span>.</>}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button asChild>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-12 w-64 rounded-2xl border-2 border-slate-200 bg-white pl-12 pr-4 text-body-md outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
+              placeholder="Search your quizzes…"
+            />
+            <Icon
+              name="search"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+            />
+          </div>
+          <Button asChild variant="tactile">
             <Link href="/quiz/create">
-              <Plus className="mr-2 h-4 w-4" />
+              <Icon name="add" />
               New quiz
             </Link>
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              clear();
-              router.push('/');
-            }}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Log out
-          </Button>
         </div>
-      </header>
+      </section>
 
       {error && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mb-6">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
       {loading ? (
-        <p className="text-muted-foreground">Loading…</p>
-      ) : quizzes.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-4 p-10 text-center">
-            <p className="text-muted-foreground">
-              You don&apos;t have any quizzes yet.
-            </p>
-            <Button asChild>
-              <Link href="/quiz/create">
-                <Plus className="mr-2 h-4 w-4" />
-                Create your first quiz
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <p className="text-on-surface-variant">Loading…</p>
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
-          {quizzes.map((q) => (
-            <li key={q._id}>
-              <Card className="flex h-full flex-col">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle>{q.title}</CardTitle>
-                    <Badge variant="secondary">
+        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+          <Link
+            href="/quiz/create"
+            className="group flex flex-col items-center justify-center rounded-3xl border-4 border-dashed border-slate-200 bg-slate-50/60 p-8 text-center transition-all hover:border-primary/40 hover:bg-primary/5"
+          >
+            <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary-fixed transition-transform group-hover:scale-110">
+              <Icon name="add" className="text-4xl text-primary" />
+            </div>
+            <span className="font-display text-headline-md text-on-surface">
+              New Session
+            </span>
+            <p className="mt-2 text-body-md text-on-surface-variant">
+              Start building a new <br /> interactive experience
+            </p>
+          </Link>
+
+          {filtered.map((q, i) => {
+            const tone = CARD_TONES[i % CARD_TONES.length];
+            return (
+              <article
+                key={q._id}
+                className={`group flex flex-col overflow-hidden rounded-3xl border-2 border-slate-100 bg-white transition-all hover:-translate-y-1 ${tone.shadow}`}
+              >
+                <div
+                  className={`relative flex h-40 items-center justify-center overflow-hidden ${tone.tint}`}
+                >
+                  <Icon
+                    name="quiz"
+                    filled
+                    className={`text-7xl opacity-50 transition-transform group-hover:scale-110 ${tone.accent}`}
+                  />
+                  <div className="absolute bottom-3 right-3">
+                    <Badge variant="outline" className="shadow-sm">
+                      <Icon name="quiz" className="text-sm" />
                       {q.questions.length} question
                       {q.questions.length === 1 ? '' : 's'}
                     </Badge>
                   </div>
+                </div>
+                <div className="flex flex-1 flex-col p-6">
+                  <h3 className="font-display text-headline-md text-on-surface line-clamp-1">
+                    {q.title}
+                  </h3>
                   {q.description && (
-                    <CardDescription>{q.description}</CardDescription>
+                    <p className="mt-1 text-body-md text-on-surface-variant line-clamp-2">
+                      {q.description}
+                    </p>
                   )}
-                </CardHeader>
-                <CardContent className="flex-1" />
-                <CardFooter className="gap-2">
-                  <Button className="flex-1" onClick={() => startGame(q._id)}>
-                    <Play className="mr-2 h-4 w-4" />
-                    Start game
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    onClick={() => deleteQuiz(q._id)}
-                    aria-label="Delete quiz"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </CardFooter>
-              </Card>
-            </li>
-          ))}
-        </ul>
+                  <div className="mt-auto flex gap-3 pt-6">
+                    <Button
+                      variant="tactile"
+                      className="flex-1"
+                      onClick={() => startGame(q._id)}
+                    >
+                      <Icon name="play_arrow" filled />
+                      Play
+                    </Button>
+                    <Button
+                      variant="tactile-outline"
+                      size="icon"
+                      aria-label="Delete quiz"
+                      onClick={() => deleteQuiz(q._id)}
+                    >
+                      <Icon name="delete" />
+                    </Button>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+
+          {filtered.length === 0 && quizzes.length > 0 && (
+            <div className="col-span-full rounded-2xl border-2 border-dashed border-slate-200 bg-white p-12 text-center">
+              <p className="text-on-surface-variant">
+                No quizzes match “{search}”.
+              </p>
+            </div>
+          )}
+        </div>
       )}
-    </main>
+    </AppShell>
   );
 }

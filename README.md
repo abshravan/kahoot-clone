@@ -1,4 +1,4 @@
-# Quizly — Real-time Quiz Platform
+# QuizDash — Real-time Quiz Platform
 
 A production-ready, Kahoot-style real-time quiz platform.
 

@@ -5,26 +5,33 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default:
+          'bg-primary text-white hover:bg-primary-dark',
+        tactile:
+          'bg-primary text-white rounded-2xl shadow-[0_4px_0_0_#0035bd] hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#0035bd] active:translate-y-[4px] active:shadow-none',
+        'tactile-secondary':
+          'bg-secondary text-white rounded-2xl shadow-[0_4px_0_0_#87006b] hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#87006b] active:translate-y-[4px] active:shadow-none',
+        'tactile-outline':
+          'bg-white text-on-surface border-2 border-slate-200 rounded-2xl shadow-[0_4px_0_0_#e2e8f0] hover:translate-y-[1px] hover:shadow-[0_3px_0_0_#e2e8f0] active:translate-y-[4px] active:shadow-none',
         destructive:
           'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         outline:
-          'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+          'border-2 border-slate-200 bg-white text-on-surface hover:bg-surface-container',
         secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
+          'bg-surface-container text-on-surface hover:bg-surface-container-high',
+        ghost: 'text-on-surface-variant hover:bg-surface-container',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8 text-base',
-        xl: 'h-14 rounded-lg px-10 text-lg',
-        icon: 'h-10 w-10',
+        default: 'h-11 px-5',
+        sm: 'h-9 px-3 text-xs',
+        lg: 'h-12 px-8 text-base',
+        xl: 'h-16 px-10 text-headline-md',
+        icon: 'h-11 w-11',
       },
     },
     defaultVariants: { variant: 'default', size: 'default' },

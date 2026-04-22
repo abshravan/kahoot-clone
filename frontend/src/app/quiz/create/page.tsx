@@ -2,21 +2,18 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Plus, X } from 'lucide-react';
+import { AppShell } from '@/components/AppShell';
+import { Icon } from '@/components/Icon';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Question } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { cn } from '@/lib/utils';
 
 type DraftQuestion = Omit<Question, '_id'>;
 
@@ -26,6 +23,13 @@ const BLANK: DraftQuestion = {
   correctAnswer: 0,
   timeLimit: 20,
 };
+
+const ANSWER_TILES = [
+  { bg: 'bg-answer-red', shadow: 'shadow-[0_4px_0_0_#CC2944]', icon: 'change_history' },
+  { bg: 'bg-answer-blue', shadow: 'shadow-[0_4px_0_0_#0033B3]', icon: 'square' },
+  { bg: 'bg-answer-yellow', shadow: 'shadow-[0_4px_0_0_#CC9900]', icon: 'circle' },
+  { bg: 'bg-answer-green', shadow: 'shadow-[0_4px_0_0_#0DA352]', icon: 'square' },
+];
 
 export default function CreateQuizPage() {
   const router = useRouter();
@@ -84,15 +88,30 @@ export default function CreateQuizPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-6">
-      <header>
-        <h1 className="text-3xl font-bold">Create quiz</h1>
-      </header>
+    <AppShell>
+      <form onSubmit={submit} className="space-y-8">
+        <header className="flex items-end justify-between gap-4">
+          <div>
+            <h1 className="font-display text-display-xl text-on-surface">
+              Create quiz
+            </h1>
+            <p className="text-body-lg text-on-surface-variant">
+              Build a question deck. Players will see the shapes; you control
+              the correct answer.
+            </p>
+          </div>
+          <Button type="submit" variant="tactile" size="lg" disabled={saving}>
+            <Icon name="save" />
+            {saving ? 'Saving…' : 'Save quiz'}
+          </Button>
+        </header>
 
-      <form onSubmit={submit} className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Details</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Icon name="description" className="text-primary" />
+              Details
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -121,7 +140,12 @@ export default function CreateQuizPage() {
         {questions.map((q, qi) => (
           <Card key={qi}>
             <CardHeader className="flex-row items-center justify-between space-y-0">
-              <CardTitle>Question {qi + 1}</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-bold text-white">
+                  {qi + 1}
+                </span>
+                Question {qi + 1}
+              </CardTitle>
               <Button
                 type="button"
                 variant="ghost"
@@ -129,51 +153,88 @@ export default function CreateQuizPage() {
                 onClick={() => removeQuestion(qi)}
                 disabled={questions.length === 1}
               >
-                <X className="mr-1 h-4 w-4" />
+                <Icon name="delete" className="text-base" />
                 Remove
               </Button>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor={`q-${qi}-text`}>Question</Label>
-                <Input
+                <Label htmlFor={`q-${qi}-text`}>Question text</Label>
+                <Textarea
                   id={`q-${qi}-text`}
-                  placeholder="Question text"
+                  placeholder="Start typing your question…"
                   value={q.questionText}
                   onChange={(e) =>
                     updateQuestion(qi, { questionText: e.target.value })
                   }
                   required
+                  rows={2}
+                  className="text-body-lg"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Options — pick the correct answer</Label>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {q.options.map((o, oi) => (
-                    <label
-                      key={oi}
-                      className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2"
-                    >
-                      <input
-                        type="radio"
-                        name={`correct-${qi}`}
-                        className="h-4 w-4 accent-primary"
-                        checked={q.correctAnswer === oi}
-                        onChange={() => updateQuestion(qi, { correctAnswer: oi })}
-                      />
-                      <Input
-                        className="border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-                        placeholder={`Option ${oi + 1}`}
-                        value={o}
-                        onChange={(e) => updateOption(qi, oi, e.target.value)}
-                        required
-                      />
-                    </label>
-                  ))}
+
+              <div className="space-y-3">
+                <Label>Answers — click the circle to mark the correct one</Label>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {q.options.map((o, oi) => {
+                    const tile = ANSWER_TILES[oi];
+                    const isCorrect = q.correctAnswer === oi;
+                    return (
+                      <div
+                        key={oi}
+                        className={cn(
+                          'relative flex items-center gap-3 rounded-2xl border-2 border-white/20 p-3 pr-14 transition-all',
+                          tile.bg,
+                          tile.shadow
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white',
+                            oi === 1 && 'rotate-45'
+                          )}
+                        >
+                          <Icon
+                            name={tile.icon}
+                            filled
+                            className={cn(oi === 1 && '-rotate-45')}
+                          />
+                        </span>
+                        <input
+                          className="h-12 flex-1 rounded-lg border-0 bg-white/90 px-3 font-semibold text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-white"
+                          placeholder={`Answer ${oi + 1}`}
+                          value={o}
+                          onChange={(e) => updateOption(qi, oi, e.target.value)}
+                          required
+                        />
+                        <button
+                          type="button"
+                          onClick={() => updateQuestion(qi, { correctAnswer: oi })}
+                          aria-label={`Mark answer ${oi + 1} as correct`}
+                          className={cn(
+                            'absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border-2 transition-colors',
+                            isCorrect
+                              ? 'border-white bg-white text-emerald-600'
+                              : 'border-white/60 text-white hover:bg-white/20'
+                          )}
+                        >
+                          <Icon
+                            name={isCorrect ? 'check_circle' : 'radio_button_unchecked'}
+                            filled={isCorrect}
+                            className="text-lg"
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor={`q-${qi}-time`}>Timer (seconds)</Label>
+                <Label htmlFor={`q-${qi}-time`} className="flex items-center gap-2">
+                  <Icon name="timer" className="text-base text-tertiary" />
+                  Timer (seconds)
+                </Label>
                 <Input
                   id={`q-${qi}-time`}
                   type="number"
@@ -191,11 +252,12 @@ export default function CreateQuizPage() {
         ))}
 
         <div className="flex items-center justify-between">
-          <Button type="button" variant="secondary" onClick={addQuestion}>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button type="button" variant="tactile-outline" onClick={addQuestion}>
+            <Icon name="add_circle" />
             Add question
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" variant="tactile" size="lg" disabled={saving}>
+            <Icon name="save" />
             {saving ? 'Saving…' : 'Save quiz'}
           </Button>
         </div>
@@ -205,6 +267,6 @@ export default function CreateQuizPage() {
           </Alert>
         )}
       </form>
-    </main>
+    </AppShell>
   );
 }

@@ -4,33 +4,34 @@
 
 @layer base {
   :root {
-    --background: 222 47% 5%;
-    --foreground: 210 40% 98%;
+    /* shadcn tokens mapped to QuizDash light palette */
+    --background: 260 100% 99%;   /* #fcf8ff */
+    --foreground: 240 28% 14%;    /* #1a1a2e */
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 28% 14%;
 
-    --popover: 222 47% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 28% 14%;
 
-    --primary: 262 83% 58%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 223 100% 44%;      /* #0040df */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 312 100% 34%;    /* #ad0089 */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 249 100% 96%;        /* #efecff */
+    --muted-foreground: 228 13% 30%;
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 249 100% 96%;
+    --accent-foreground: 240 28% 14%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 42%;     /* #ba1a1a */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 262 83% 58%;
+    --border: 237 19% 81%;        /* #c4c5d9 */
+    --input: 237 19% 88%;
+    --ring: 223 100% 44%;
 
     --radius: 0.75rem;
   }
@@ -38,11 +39,41 @@
   * {
     @apply border-border;
   }
+
   html,
   body {
     height: 100%;
   }
+
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-on-surface antialiased font-sans;
+  }
+}
+
+@layer utilities {
+  .pattern-bg {
+    background-color: #fcf8ff;
+    background-image:
+      radial-gradient(#2d5bff1a 1.5px, transparent 1.5px),
+      radial-gradient(#2d5bff1a 1.5px, #fcf8ff 1.5px);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+  }
+
+  .textured-overlay {
+    background-image: radial-gradient(
+      circle at 2px 2px,
+      rgba(255, 255, 255, 0.15) 1px,
+      transparent 0
+    );
+    background-size: 12px 12px;
+  }
+
+  /* Material Symbols sizing + fill helpers */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+  .material-symbols-outlined.filled {
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
   }
 }
