@@ -5,6 +5,17 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuth, type AuthUser } from '@/lib/auth';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -35,42 +46,61 @@ export default function RegisterPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center">
-      <form onSubmit={submit} className="card w-full max-w-md space-y-4">
-        <h1 className="text-2xl font-bold">Create a host account</h1>
-        <input
-          className="input"
-          placeholder="Your name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-        <input
-          type="email"
-          className="input"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          className="input"
-          placeholder="Password (min 6)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={6}
-        />
-        {error && <p className="text-sm text-red-400">{error}</p>}
-        <button className="btn-primary w-full" disabled={loading}>
-          {loading ? 'Creating…' : 'Register'}
-        </button>
-        <p className="text-center text-sm text-slate-400">
-          Have an account?{' '}
-          <Link href="/login" className="text-brand-light hover:underline">
-            Log in
-          </Link>
-        </p>
-      </form>
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Create a host account</CardTitle>
+          <CardDescription>
+            Free to sign up. Takes about ten seconds.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={submit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Your name</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password (min 6)</Label>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+              />
+            </div>
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Creating…' : 'Register'}
+            </Button>
+            <p className="text-center text-sm text-muted-foreground">
+              Have an account?{' '}
+              <Link href="/login" className="text-primary hover:underline">
+                Log in
+              </Link>
+            </p>
+          </form>
+        </CardContent>
+      </Card>
     </main>
   );
 }

@@ -2,9 +2,21 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Plus, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Question } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type DraftQuestion = Omit<Question, '_id'>;
 
@@ -21,7 +33,9 @@ export default function CreateQuizPage() {
   const token = useAuth((s) => s.token);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [questions, setQuestions] = useState<DraftQuestion[]>([{ ...BLANK, options: ['', '', '', ''] }]);
+  const [questions, setQuestions] = useState<DraftQuestion[]>([
+    { ...BLANK, options: ['', '', '', ''] },
+  ]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -60,11 +74,7 @@ export default function CreateQuizPage() {
     }
     setSaving(true);
     try {
-      await api.post(
-        '/api/quizzes',
-        { title, description, questions },
-        token
-      );
+      await api.post('/api/quizzes', { title, description, questions }, token);
       router.push('/host');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Save failed');
@@ -80,85 +90,120 @@ export default function CreateQuizPage() {
       </header>
 
       <form onSubmit={submit} className="space-y-6">
-        <div className="card space-y-3">
-          <input
-            className="input text-lg"
-            placeholder="Quiz title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          <textarea
-            className="input"
-            placeholder="Description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-          />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                placeholder="Quiz title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">Description (optional)</Label>
+              <Textarea
+                id="description"
+                placeholder="What is this quiz about?"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         {questions.map((q, qi) => (
-          <div key={qi} className="card space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold">Question {qi + 1}</h2>
-              <button
+          <Card key={qi}>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle>Question {qi + 1}</CardTitle>
+              <Button
                 type="button"
-                className="text-sm text-red-400 hover:underline"
+                variant="ghost"
+                size="sm"
                 onClick={() => removeQuestion(qi)}
                 disabled={questions.length === 1}
               >
+                <X className="mr-1 h-4 w-4" />
                 Remove
-              </button>
-            </div>
-            <input
-              className="input"
-              placeholder="Question text"
-              value={q.questionText}
-              onChange={(e) => updateQuestion(qi, { questionText: e.target.value })}
-              required
-            />
-            <div className="grid gap-2 md:grid-cols-2">
-              {q.options.map((o, oi) => (
-                <label key={oi} className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name={`correct-${qi}`}
-                    checked={q.correctAnswer === oi}
-                    onChange={() => updateQuestion(qi, { correctAnswer: oi })}
-                  />
-                  <input
-                    className="input"
-                    placeholder={`Option ${oi + 1}`}
-                    value={o}
-                    onChange={(e) => updateOption(qi, oi, e.target.value)}
-                    required
-                  />
-                </label>
-              ))}
-            </div>
-            <label className="flex items-center gap-3 text-sm">
-              Timer (seconds)
-              <input
-                type="number"
-                min={5}
-                max={120}
-                className="input w-24"
-                value={q.timeLimit}
-                onChange={(e) => updateQuestion(qi, { timeLimit: Number(e.target.value) })}
-              />
-            </label>
-          </div>
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor={`q-${qi}-text`}>Question</Label>
+                <Input
+                  id={`q-${qi}-text`}
+                  placeholder="Question text"
+                  value={q.questionText}
+                  onChange={(e) =>
+                    updateQuestion(qi, { questionText: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Options — pick the correct answer</Label>
+                <div className="grid gap-2 md:grid-cols-2">
+                  {q.options.map((o, oi) => (
+                    <label
+                      key={oi}
+                      className="flex items-center gap-2 rounded-md border border-input bg-background px-3 py-2"
+                    >
+                      <input
+                        type="radio"
+                        name={`correct-${qi}`}
+                        className="h-4 w-4 accent-primary"
+                        checked={q.correctAnswer === oi}
+                        onChange={() => updateQuestion(qi, { correctAnswer: oi })}
+                      />
+                      <Input
+                        className="border-0 bg-transparent px-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        placeholder={`Option ${oi + 1}`}
+                        value={o}
+                        onChange={(e) => updateOption(qi, oi, e.target.value)}
+                        required
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`q-${qi}-time`}>Timer (seconds)</Label>
+                <Input
+                  id={`q-${qi}-time`}
+                  type="number"
+                  min={5}
+                  max={120}
+                  className="w-28"
+                  value={q.timeLimit}
+                  onChange={(e) =>
+                    updateQuestion(qi, { timeLimit: Number(e.target.value) })
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
         ))}
 
         <div className="flex items-center justify-between">
-          <button type="button" className="btn-secondary" onClick={addQuestion}>
-            + Add question
-          </button>
-          <button className="btn-primary" disabled={saving}>
+          <Button type="button" variant="secondary" onClick={addQuestion}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add question
+          </Button>
+          <Button type="submit" disabled={saving}>
             {saving ? 'Saving…' : 'Save quiz'}
-          </button>
+          </Button>
         </div>
-        {error && <p className="text-red-400">{error}</p>}
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
       </form>
     </main>
   );

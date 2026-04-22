@@ -2,7 +2,7 @@
 
 A production-ready, Kahoot-style real-time quiz platform.
 
-- **Frontend:** Next.js 14 (App Router) + TailwindCSS + Zustand + socket.io-client
+- **Frontend:** Next.js 14 (App Router) + TailwindCSS + **shadcn/ui** + Zustand + socket.io-client
 - **Backend:** Node.js + Express + Socket.IO + Mongoose
 - **Database:** MongoDB
 - **Optional:** Redis (reserved for horizontal scaling)
@@ -36,9 +36,11 @@ kahoot-clone/
 │   │   ├── app/             pages: /, /login, /register, /host,
 │   │   │                    /quiz/create, /game/[pin]/host,
 │   │   │                    /game/[pin]/player
-│   │   ├── components/      AnswerButton, TimerBar, Leaderboard,
-│   │   │                    JoinForm
-│   │   └── lib/             api client, socket client, auth store
+│   │   ├── components/
+│   │   │   ├── ui/          shadcn primitives: button, card, input,
+│   │   │   │                textarea, label, progress, badge, alert
+│   │   │   └── …            AnswerButton, TimerBar, Leaderboard, JoinForm
+│   │   └── lib/             api, socket, auth store, utils (cn)
 │   └── Dockerfile
 ├── docker-compose.yml
 ├── .env.example
@@ -226,7 +228,7 @@ See `.env.example`. Noteworthy:
 | `PORT` | `4000` | Backend HTTP + socket port |
 | `MONGO_URI` | `mongodb://mongo:27017/kahoot` | MongoDB connection string |
 | `JWT_SECRET` | `dev-insecure-secret` | JWT signing key — **change in production** |
-| `CLIENT_ORIGIN` | `http://localhost:3000` | CORS origin for the frontend |
+| `CLIENT_ORIGIN` | `http://localhost:3000` | CORS origin(s). Comma-separated list, or `*` to allow any. |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:4000` | Backend URL used by the frontend |
 | `NEXT_PUBLIC_SOCKET_URL` | same as API | Socket.IO URL used by the frontend |
 

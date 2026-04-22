@@ -7,6 +7,8 @@ import { Leaderboard } from '@/components/Leaderboard';
 import { TimerBar } from '@/components/TimerBar';
 import { getSocket } from '@/lib/socket';
 import type { LeaderboardRow, PublicQuestion } from '@/lib/types';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type Phase =
   | 'joining'
@@ -23,7 +25,7 @@ export default function PlayerGamePage() {
   const pin = params.pin;
   const initialName = search.get('name') ?? '';
 
-  const [name, setName] = useState(initialName);
+  const [name] = useState(initialName);
   const [phase, setPhase] = useState<Phase>(initialName ? 'joining' : 'error');
   const [error, setError] = useState<string | null>(
     initialName ? null : 'Missing player name. Please join from the home page.'
@@ -124,9 +126,13 @@ export default function PlayerGamePage() {
   if (phase === 'error') {
     return (
       <main className="flex flex-1 items-center justify-center">
-        <div className="card max-w-md text-center">
-          <p className="text-red-400">{error}</p>
-        </div>
+        <Card className="max-w-md">
+          <CardContent className="p-6 text-center">
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
       </main>
     );
   }
@@ -135,26 +141,30 @@ export default function PlayerGamePage() {
     <main className="flex flex-1 flex-col gap-4">
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase text-slate-500">Playing as</p>
+          <p className="text-xs uppercase text-muted-foreground">Playing as</p>
           <p className="text-lg font-semibold">{name}</p>
         </div>
-        <div>
-          <p className="text-xs uppercase text-slate-500">PIN</p>
+        <div className="text-right">
+          <p className="text-xs uppercase text-muted-foreground">PIN</p>
           <p className="font-mono">{pin}</p>
         </div>
       </header>
 
       {phase === 'waiting' && (
-        <div className="card text-center">
-          <p className="text-lg">You&apos;re in! Waiting for host to start…</p>
-        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <p className="text-lg">You&apos;re in! Waiting for host to start…</p>
+          </CardContent>
+        </Card>
       )}
 
       {phase === 'question' && question && (
         <>
-          <div className="card">
-            <p className="text-xl font-semibold">{question.questionText}</p>
-          </div>
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-xl font-semibold">{question.questionText}</p>
+            </CardContent>
+          </Card>
           <TimerBar startedAt={startedAt} durationMs={question.timeLimit * 1000} />
           <div className="grid gap-3 md:grid-cols-2">
             {question.options.map((o, i) => (
@@ -172,9 +182,11 @@ export default function PlayerGamePage() {
 
       {phase === 'answered' && question && (
         <>
-          <div className="card text-center">
-            <p className="text-lg">Answer locked in. Waiting for others…</p>
-          </div>
+          <Card>
+            <CardContent className="p-6 text-center">
+              <p className="text-lg">Answer locked in. Waiting for others…</p>
+            </CardContent>
+          </Card>
           <TimerBar startedAt={startedAt} durationMs={question.timeLimit * 1000} />
           <div className="grid gap-3 md:grid-cols-2">
             {question.options.map((o, i) => (
@@ -191,23 +203,25 @@ export default function PlayerGamePage() {
       )}
 
       {phase === 'result' && result && question && (
-        <div className="card text-center">
-          <h2
-            className={
-              result.correct
-                ? 'text-2xl font-bold text-emerald-400'
-                : 'text-2xl font-bold text-red-400'
-            }
-          >
-            {result.correct ? 'Correct! 🎉' : 'Not quite.'}
-          </h2>
-          <p className="mt-2 text-slate-300">
-            +{result.points} points · total {result.totalScore}
-          </p>
-          <p className="mt-3 text-sm text-slate-400">
-            Correct answer: {question.options[result.correctAnswer]}
-          </p>
-        </div>
+        <Card>
+          <CardContent className="p-8 text-center">
+            <h2
+              className={
+                result.correct
+                  ? 'text-2xl font-bold text-emerald-400'
+                  : 'text-2xl font-bold text-destructive'
+              }
+            >
+              {result.correct ? 'Correct! 🎉' : 'Not quite.'}
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              +{result.points} points · total {result.totalScore}
+            </p>
+            <p className="mt-3 text-sm text-muted-foreground">
+              Correct answer: {question.options[result.correctAnswer]}
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {phase === 'ended' && (

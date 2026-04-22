@@ -3,9 +3,21 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Plus, LogOut, Play, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import type { Quiz } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 export default function HostDashboard() {
   const router = useRouter();
@@ -64,59 +76,87 @@ export default function HostDashboard() {
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Your quizzes</h1>
-          {user && <p className="text-slate-400">Signed in as {user.email}</p>}
+          {user && (
+            <p className="text-sm text-muted-foreground">
+              Signed in as {user.email}
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
-          <Link href="/quiz/create" className="btn-primary">
-            + New quiz
-          </Link>
-          <button
-            className="btn-secondary"
+          <Button asChild>
+            <Link href="/quiz/create">
+              <Plus className="mr-2 h-4 w-4" />
+              New quiz
+            </Link>
+          </Button>
+          <Button
+            variant="secondary"
             onClick={() => {
               clear();
               router.push('/');
             }}
           >
+            <LogOut className="mr-2 h-4 w-4" />
             Log out
-          </button>
+          </Button>
         </div>
       </header>
 
-      {error && <p className="text-red-400">{error}</p>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {loading ? (
-        <p className="text-slate-400">Loading…</p>
+        <p className="text-muted-foreground">Loading…</p>
       ) : quizzes.length === 0 ? (
-        <div className="card text-center">
-          <p className="text-slate-400">You don&apos;t have any quizzes yet.</p>
-          <Link href="/quiz/create" className="btn-primary mt-4 inline-flex">
-            Create your first quiz
-          </Link>
-        </div>
+        <Card>
+          <CardContent className="flex flex-col items-center gap-4 p-10 text-center">
+            <p className="text-muted-foreground">
+              You don&apos;t have any quizzes yet.
+            </p>
+            <Button asChild>
+              <Link href="/quiz/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Create your first quiz
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <ul className="grid gap-4 md:grid-cols-2">
           {quizzes.map((q) => (
-            <li key={q._id} className="card flex flex-col gap-3">
-              <div>
-                <h2 className="text-xl font-semibold">{q.title}</h2>
-                <p className="text-sm text-slate-400">
-                  {q.questions.length} question{q.questions.length === 1 ? '' : 's'}
-                </p>
-                {q.description && (
-                  <p className="mt-1 text-slate-300">{q.description}</p>
-                )}
-              </div>
-              <div className="mt-auto flex gap-2">
-                <button className="btn-primary flex-1" onClick={() => startGame(q._id)}>
-                  Start game
-                </button>
-                <button
-                  className="btn-secondary"
-                  onClick={() => deleteQuiz(q._id)}
-                >
-                  Delete
-                </button>
-              </div>
+            <li key={q._id}>
+              <Card className="flex h-full flex-col">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-2">
+                    <CardTitle>{q.title}</CardTitle>
+                    <Badge variant="secondary">
+                      {q.questions.length} question
+                      {q.questions.length === 1 ? '' : 's'}
+                    </Badge>
+                  </div>
+                  {q.description && (
+                    <CardDescription>{q.description}</CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="flex-1" />
+                <CardFooter className="gap-2">
+                  <Button className="flex-1" onClick={() => startGame(q._id)}>
+                    <Play className="mr-2 h-4 w-4" />
+                    Start game
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    onClick={() => deleteQuiz(q._id)}
+                    aria-label="Delete quiz"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </CardFooter>
+              </Card>
             </li>
           ))}
         </ul>
