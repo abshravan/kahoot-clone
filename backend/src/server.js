@@ -8,7 +8,7 @@ async function main() {
   await connectDB();
   const app = createApp();
   const httpServer = http.createServer(app);
-  attachSockets(httpServer);
+  await attachSockets(httpServer);
 
   httpServer.listen(env.PORT, () => {
     console.log(`[server] listening on :${env.PORT}`);
