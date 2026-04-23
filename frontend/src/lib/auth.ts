@@ -12,7 +12,7 @@ type AuthState = {
   clear: () => void;
 };
 
-const STORAGE_KEY = 'quizly.auth';
+const STORAGE_KEY = 'knowledge-stack.auth';
 
 export const useAuth = create<AuthState>((set) => ({
   token: null,

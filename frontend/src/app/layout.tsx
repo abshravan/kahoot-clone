@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
-  title: 'QuizDash — Real-time Quiz Platform',
+  title: 'Knowledge Stack — Real-time Quiz Platform',
   description: 'A Kahoot-style real-time quiz platform.',
 };
 

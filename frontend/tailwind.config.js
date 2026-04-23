@@ -37,7 +37,7 @@ module.exports = {
           foreground: 'hsl(var(--accent-foreground))',
         },
 
-        // QuizDash palette (direct hex, Material 3-inspired)
+        // Knowledge Stack palette (direct hex, Material 3-inspired)
         primary: {
           DEFAULT: '#0040df',
           foreground: '#ffffff',

@@ -7,9 +7,11 @@ import { AnswerButton } from '@/components/AnswerButton';
 import { Leaderboard } from '@/components/Leaderboard';
 import { TimerBar } from '@/components/TimerBar';
 import { Icon } from '@/components/Icon';
+import { Modal } from '@/components/Modal';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
 import { getSocket } from '@/lib/socket';
-import type { LeaderboardRow, Player, PublicQuestion } from '@/lib/types';
+import type { LeaderboardRow, Player, PublicQuestion, Quiz } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -47,6 +49,11 @@ export default function HostGamePage() {
   const [answerCounts, setAnswerCounts] = useState<number[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [quizId, setQuizId] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [quizLibrary, setQuizLibrary] = useState<Quiz[] | null>(null);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [startingPin, setStartingPin] = useState(false);
 
   useEffect(() => {
     hydrate();
@@ -62,7 +69,11 @@ export default function HostGamePage() {
       (res: {
         ok: boolean;
         error?: string;
-        session?: { status: 'waiting' | 'live' | 'ended'; players: Player[] };
+        session?: {
+          status: 'waiting' | 'live' | 'ended';
+          players: Player[];
+          quizId?: string;
+        };
       }) => {
         if (!res.ok) {
           setError(res.error || 'Failed to join session');
@@ -71,6 +82,7 @@ export default function HostGamePage() {
         if (res.session) {
           setStatus(res.session.status);
           setPlayers(res.session.players);
+          if (res.session.quizId) setQuizId(res.session.quizId);
         }
       }
     );
@@ -147,6 +159,39 @@ export default function HostGamePage() {
         if (!res.ok) setError(res.error || 'Failed to advance');
       }
     );
+  }
+
+  async function startQuiz(targetQuizId: string) {
+    if (!token || startingPin) return;
+    setError(null);
+    setStartingPin(true);
+    try {
+      const { session } = await api.post<{ session: { pin: string } }>(
+        '/api/games',
+        { quizId: targetQuizId },
+        token
+      );
+      // Full navigation so we get a fresh socket context.
+      router.push(`/game/${session.pin}/host`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start');
+      setStartingPin(false);
+    }
+  }
+
+  async function openQuizPicker() {
+    setPickerOpen(true);
+    if (quizLibrary !== null || !token) return;
+    setLibraryLoading(true);
+    try {
+      const data = await api.get<{ quizzes: Quiz[] }>('/api/quizzes', token);
+      setQuizLibrary(data.quizzes);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load quizzes');
+      setPickerOpen(false);
+    } finally {
+      setLibraryLoading(false);
+    }
   }
 
   const joinUrl = useMemo(() => {
@@ -343,9 +388,23 @@ export default function HostGamePage() {
           />
           {status === 'ended' && (
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-              <Button variant="tactile" size="lg" onClick={() => router.push('/host')}>
+              <Button
+                variant="tactile"
+                size="lg"
+                disabled={!quizId || startingPin}
+                onClick={() => quizId && startQuiz(quizId)}
+              >
                 <Icon name="replay" />
                 Play again
+              </Button>
+              <Button
+                variant="tactile-secondary"
+                size="lg"
+                disabled={startingPin}
+                onClick={openQuizPicker}
+              >
+                <Icon name="queue_play_next" filled />
+                Next quiz
               </Button>
               <Button
                 variant="tactile-outline"
@@ -359,6 +418,69 @@ export default function HostGamePage() {
           )}
         </div>
       )}
+
+      <Modal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title="Pick your next quiz"
+      >
+        <div className="max-h-[60vh] space-y-3 overflow-y-auto p-6">
+          {libraryLoading && (
+            <p className="text-center text-on-surface-variant">Loading…</p>
+          )}
+          {!libraryLoading && quizLibrary && quizLibrary.length === 0 && (
+            <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
+              <p className="text-on-surface-variant">
+                You don&apos;t have any other quizzes yet.
+              </p>
+              <Button
+                asChild
+                variant="tactile"
+                className="mt-4"
+                onClick={() => setPickerOpen(false)}
+              >
+                <a href="/quiz/create">
+                  <Icon name="add" />
+                  Create one
+                </a>
+              </Button>
+            </div>
+          )}
+          {!libraryLoading &&
+            quizLibrary &&
+            quizLibrary.map((q) => {
+              const isCurrent = q._id === quizId;
+              return (
+                <button
+                  key={q._id}
+                  type="button"
+                  disabled={startingPin}
+                  onClick={() => startQuiz(q._id)}
+                  className="group flex w-full items-center gap-4 rounded-2xl border-2 border-slate-100 bg-white p-4 text-left transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg disabled:opacity-60"
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-fixed text-primary">
+                    <Icon name="quiz" filled />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-display text-body-lg text-on-surface">
+                      {q.title}
+                    </p>
+                    <p className="text-xs text-on-surface-variant">
+                      {q.questions.length} question
+                      {q.questions.length === 1 ? '' : 's'}
+                      {isCurrent && ' · you just played this'}
+                    </p>
+                  </div>
+                  <Icon
+                    name="play_arrow"
+                    filled
+                    className="text-2xl text-primary transition-transform group-hover:translate-x-1"
+                  />
+                </button>
+              );
+            })}
+        </div>
+      </Modal>
     </AppShell>
   );
 }

@@ -14,8 +14,8 @@ export default function HomePage() {
             Real-time quizzes
           </div>
           <h1 className="mt-6 font-display text-display-xl text-on-surface">
-            Turn any room into a{' '}
-            <span className="text-primary">game show</span>.
+            Stack the knowledge.{' '}
+            <span className="text-primary">Run the room.</span>
           </h1>
           <p className="mt-4 max-w-xl font-body-lg text-body-lg text-on-surface-variant">
             Host quizzes in seconds. Players join from any device with a PIN. No

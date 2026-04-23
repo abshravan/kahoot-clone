@@ -116,6 +116,7 @@ function registerGameHandlers(io, socket) {
           pin: session.pin,
           status: session.status,
           players: playersPublic(session),
+          quizId: session.quizId.toString(),
         },
       });
     } catch (err) {

@@ -34,7 +34,7 @@ export default function HostDashboard() {
 
   useEffect(() => {
     if (token === null && typeof window !== 'undefined') {
-      const raw = localStorage.getItem('quizly.auth');
+      const raw = localStorage.getItem('knowledge-stack.auth');
       if (!raw) router.replace('/login');
     }
   }, [token, router]);

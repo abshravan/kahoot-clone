@@ -1,4 +1,4 @@
-# QuizDash — Real-time Quiz Platform
+# Knowledge Stack — Real-time Quiz Platform
 
 A production-ready, Kahoot-style real-time quiz platform.
 

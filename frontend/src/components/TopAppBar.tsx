@@ -40,9 +40,10 @@ export function TopAppBar({ pin }: { pin?: string }) {
       <div className="flex items-center gap-8">
         <Link
           href="/"
-          className="font-display text-2xl font-black italic tracking-tight text-primary"
+          className="flex items-center gap-2 font-display text-2xl font-black italic tracking-tight text-primary"
         >
-          QuizDash
+          <Icon name="stacks" filled className="text-3xl" />
+          Knowledge Stack
         </Link>
         <nav className="hidden items-center gap-6 md:flex">
           <NavLink href="/">Lobby</NavLink>
