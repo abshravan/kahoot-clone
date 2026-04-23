@@ -46,7 +46,6 @@ export default function HostGamePage() {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [startedAt, setStartedAt] = useState(0);
   const [lastLeaderboard, setLastLeaderboard] = useState<LeaderboardRow[]>([]);
-  const [answerCounts, setAnswerCounts] = useState<number[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [quizId, setQuizId] = useState<string | null>(null);
@@ -104,16 +103,13 @@ export default function HostGamePage() {
       setQuestionIndex(payload.index);
       setTotalQuestions(payload.total);
       setStartedAt(payload.startedAt);
-      setAnswerCounts([]);
       setCorrectAnswer(null);
     };
     const onLeaderboard = (payload: {
       leaderboard: LeaderboardRow[];
-      answerCounts: number[];
       correctAnswer: number;
     }) => {
       setLastLeaderboard(payload.leaderboard);
-      setAnswerCounts(payload.answerCounts);
       setCorrectAnswer(payload.correctAnswer);
     };
     const onGameEnded = (payload: { leaderboard: LeaderboardRow[] }) => {
@@ -346,28 +342,17 @@ export default function HostGamePage() {
             ))}
           </div>
 
-          {answerCounts.length > 0 && (
+          {correctAnswer !== null && (
             <Card>
-              <CardContent className="space-y-4 p-6">
-                <h3 className="flex items-center gap-2 font-display text-headline-md">
-                  <Icon name="bar_chart" filled className="text-primary" />
-                  Answer distribution
-                </h3>
-                <div className="flex items-end gap-3">
-                  {answerCounts.map((c, i) => {
-                    const tone = ['bg-answer-red', 'bg-answer-blue', 'bg-answer-yellow', 'bg-answer-green'][i];
-                    return (
-                      <div key={i} className="flex flex-1 flex-col items-center">
-                        <div
-                          className={cn('w-full rounded-t-xl', tone)}
-                          style={{ height: `${Math.max(c * 30, 8)}px` }}
-                        />
-                        <span className="mt-1 font-label text-sm text-on-surface-variant">
-                          {c}
-                        </span>
-                      </div>
-                    );
-                  })}
+              <CardContent className="flex flex-col items-center gap-4 p-6 text-center sm:flex-row sm:justify-between sm:text-left">
+                <div className="flex items-center gap-3">
+                  <Icon name="check_circle" filled className="text-2xl text-answer-green" />
+                  <div>
+                    <h3 className="font-display text-headline-md">Correct answer revealed</h3>
+                    <p className="text-body-md text-on-surface-variant">
+                      Players can see their own result — advance when you&apos;re ready.
+                    </p>
+                  </div>
                 </div>
                 <Button variant="tactile" onClick={nextQuestion}>
                   Next question
