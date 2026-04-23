@@ -380,7 +380,7 @@ export default function HostGamePage() {
           <Leaderboard
             rows={lastLeaderboard}
             title={status === 'ended' ? 'Victory Royale!' : 'Standings'}
-            showPodium={status === 'ended'}
+            showPodium
           />
           {status === 'ended' && (
             <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
