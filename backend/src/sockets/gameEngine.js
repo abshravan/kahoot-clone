@@ -110,6 +110,7 @@ function registerGameHandlers(io, socket) {
       socket.data.pin = pin;
       socket.data.role = 'host';
       socket.join(`game:${pin}`);
+      socket.join(`host:${pin}`);
       ack?.({
         ok: true,
         session: {
@@ -224,6 +225,14 @@ function registerGameHandlers(io, socket) {
       await session.save();
 
       ack?.({ ok: true, correct, points });
+
+      // Live leaderboard tick for the host only — players must not see
+      // standings change mid-question.
+      io.to(`host:${pin}`).emit('host_leaderboard_update', {
+        leaderboard: leaderboardFor(session),
+        answeredCount: rt.answersThisQuestion.size,
+        totalPlayers: session.players.length,
+      });
 
       // If all players answered, end the question early.
       if (rt.answersThisQuestion.size >= session.players.length) {

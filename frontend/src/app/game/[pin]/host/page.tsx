@@ -47,6 +47,7 @@ export default function HostGamePage() {
   const [startedAt, setStartedAt] = useState(0);
   const [lastLeaderboard, setLastLeaderboard] = useState<LeaderboardRow[]>([]);
   const [correctAnswer, setCorrectAnswer] = useState<number | null>(null);
+  const [answeredCount, setAnsweredCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [quizId, setQuizId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -104,6 +105,7 @@ export default function HostGamePage() {
       setTotalQuestions(payload.total);
       setStartedAt(payload.startedAt);
       setCorrectAnswer(null);
+      setAnsweredCount(0);
     };
     const onLeaderboard = (payload: {
       leaderboard: LeaderboardRow[];
@@ -111,6 +113,13 @@ export default function HostGamePage() {
     }) => {
       setLastLeaderboard(payload.leaderboard);
       setCorrectAnswer(payload.correctAnswer);
+    };
+    const onHostLeaderboardUpdate = (payload: {
+      leaderboard: LeaderboardRow[];
+      answeredCount: number;
+    }) => {
+      setLastLeaderboard(payload.leaderboard);
+      setAnsweredCount(payload.answeredCount);
     };
     const onGameEnded = (payload: { leaderboard: LeaderboardRow[] }) => {
       setStatus('ended');
@@ -123,6 +132,7 @@ export default function HostGamePage() {
     socket.on('game_started', onGameStarted);
     socket.on('next_question', onNextQuestion);
     socket.on('leaderboard_update', onLeaderboard);
+    socket.on('host_leaderboard_update', onHostLeaderboardUpdate);
     socket.on('game_ended', onGameEnded);
 
     return () => {
@@ -131,6 +141,7 @@ export default function HostGamePage() {
       socket.off('game_started', onGameStarted);
       socket.off('next_question', onNextQuestion);
       socket.off('leaderboard_update', onLeaderboard);
+      socket.off('host_leaderboard_update', onHostLeaderboardUpdate);
       socket.off('game_ended', onGameEnded);
     };
   }, [pin, user]);
@@ -312,7 +323,7 @@ export default function HostGamePage() {
               Question {questionIndex + 1} of {totalQuestions}
             </span>
             <span className="font-label text-body-md text-on-surface-variant">
-              {players.length} player{players.length === 1 ? '' : 's'}
+              {answeredCount} / {players.length} answered
             </span>
           </div>
 
