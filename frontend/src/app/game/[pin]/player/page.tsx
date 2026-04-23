@@ -18,8 +18,14 @@ type Phase =
   | 'question'
   | 'answered'
   | 'result'
+  | 'leaderboard'
   | 'ended'
   | 'error';
+
+// How long the correct/wrong splash stays up before transitioning to the
+// standings. The server auto-advances to the next question after ~5s, so
+// this gives the player a ~2.5s look at each screen.
+const RESULT_SPLASH_MS = 2500;
 
 export default function PlayerGamePage() {
   const params = useParams<{ pin: string }>();
@@ -44,30 +50,25 @@ export default function PlayerGamePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [streak, setStreak] = useState(0);
   const joinedRef = useRef(false);
+  const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Register socket listeners on every mount — do NOT gate this behind the
+  // "already joined" ref. Previously we did, and React strict mode's
+  // mount → cleanup → mount cycle would remove the listeners on cleanup
+  // then skip re-registering on the second mount, so players silently
+  // stopped receiving next_question / answer_result / leaderboard_update.
   useEffect(() => {
-    if (!initialName || joinedRef.current) return;
-    joinedRef.current = true;
+    if (!initialName) return;
     const socket = getSocket();
-
-    socket.emit(
-      'join_game',
-      { pin, playerName: initialName },
-      (res: { ok: boolean; error?: string }) => {
-        if (!res.ok) {
-          setError(res.error || 'Failed to join');
-          setPhase('error');
-          joinedRef.current = false;
-          return;
-        }
-        setPhase('waiting');
-      }
-    );
 
     const onNextQuestion = (payload: {
       question: PublicQuestion;
       startedAt: number;
     }) => {
+      if (resultTimerRef.current) {
+        clearTimeout(resultTimerRef.current);
+        resultTimerRef.current = null;
+      }
       setQuestion(payload.question);
       setStartedAt(payload.startedAt);
       setSelected(null);
@@ -84,6 +85,14 @@ export default function PlayerGamePage() {
       setResult(payload);
       setStreak((s) => (payload.correct ? s + 1 : 0));
       setPhase('result');
+
+      if (resultTimerRef.current) clearTimeout(resultTimerRef.current);
+      resultTimerRef.current = setTimeout(() => {
+        resultTimerRef.current = null;
+        // Only transition if we're still on the result splash — the
+        // next_question handler clears this timer if it arrives first.
+        setPhase((p) => (p === 'result' ? 'leaderboard' : p));
+      }, RESULT_SPLASH_MS);
     };
 
     const onLeaderboard = (payload: { leaderboard: LeaderboardRow[] }) => {
@@ -106,7 +115,36 @@ export default function PlayerGamePage() {
       socket.off('leaderboard_update', onLeaderboard);
       socket.off('game_ended', onGameEnded);
     };
+  }, [initialName]);
+
+  // One-shot join. Guarded so strict-mode's double-mount doesn't send the
+  // emit twice (which would get "Name already taken" from the server).
+  useEffect(() => {
+    if (!initialName || joinedRef.current) return;
+    joinedRef.current = true;
+
+    const socket = getSocket();
+    socket.emit(
+      'join_game',
+      { pin, playerName: initialName },
+      (res: { ok: boolean; error?: string }) => {
+        if (!res.ok) {
+          setError(res.error || 'Failed to join');
+          setPhase('error');
+          joinedRef.current = false;
+          return;
+        }
+        setPhase((p) => (p === 'joining' ? 'waiting' : p));
+      }
+    );
   }, [pin, initialName]);
+
+  // Stop the splash timer if the page unmounts mid-result.
+  useEffect(() => {
+    return () => {
+      if (resultTimerRef.current) clearTimeout(resultTimerRef.current);
+    };
+  }, []);
 
   function submit(answer: number) {
     if (!question || selected !== null) return;
@@ -155,22 +193,29 @@ export default function PlayerGamePage() {
             <p className="font-display text-body-lg font-bold">{name}</p>
           </div>
         </div>
-        {streak > 0 && (
-          <div className="flex items-center gap-1 rounded-full bg-secondary/10 px-3 py-1.5 font-label text-label-bold text-secondary">
-            <Icon name="local_fire_department" filled />
-            {streak} streak
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {result && (
+            <div className="rounded-full bg-primary/10 px-3 py-1.5 font-label text-label-bold text-primary tabular-nums">
+              {result.totalScore.toLocaleString()} pts
+            </div>
+          )}
+          {streak > 0 && (
+            <div className="flex items-center gap-1 rounded-full bg-secondary/10 px-3 py-1.5 font-label text-label-bold text-secondary">
+              <Icon name="local_fire_department" filled />
+              {streak}
+            </div>
+          )}
+        </div>
       </header>
 
-      {phase === 'waiting' && (
+      {(phase === 'waiting' || phase === 'joining') && (
         <Card>
           <CardContent className="p-10 text-center">
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-fixed text-primary">
               <Icon name="hourglass_top" filled className="text-3xl" />
             </div>
             <h2 className="font-display text-headline-md text-on-surface">
-              You&apos;re in!
+              {phase === 'joining' ? 'Connecting…' : "You're in!"}
             </h2>
             <p className="mt-2 text-body-md text-on-surface-variant">
               Waiting for the host to start…
@@ -267,6 +312,16 @@ export default function PlayerGamePage() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {phase === 'leaderboard' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-center gap-2 rounded-full border-2 border-primary/20 bg-primary/10 px-4 py-2 font-label text-label-bold uppercase tracking-widest text-primary">
+            <Icon name="timer" className="text-base" />
+            Next question coming up…
+          </div>
+          <Leaderboard rows={leaderboard} title="Standings" showPodium={false} />
+        </div>
       )}
 
       {phase === 'ended' && (
